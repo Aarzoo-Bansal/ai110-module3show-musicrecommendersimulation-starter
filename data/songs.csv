@@ -9,3 +9,11 @@ id,title,artist,genre,mood,energy,tempo_bpm,valence,danceability,acousticness
 8,Night Drive Loop,Neon Echo,synthwave,moody,0.75,110,0.49,0.73,0.22
 9,Focus Flow,LoRoom,lofi,focused,0.40,80,0.59,0.60,0.78
 10,Rooftop Lights,Indigo Parade,indie pop,happy,0.76,124,0.81,0.82,0.35
+11,Late Night Bars,Dre Velvet,r&b,moody,0.55,92,0.62,0.71,0.40
+12,Bass Drop Central,DJ Frostbyte,electronic,intense,0.95,140,0.60,0.92,0.03
+13,Quiet Strings,Clara Muse,classical,relaxed,0.20,68,0.70,0.30,0.97
+14,Dust Road Anthem,The Porchmen,country,happy,0.65,112,0.78,0.72,0.82
+15,Rage Circuit,Iron Veil,metal,intense,0.98,170,0.30,0.45,0.06
+16,Island Breeze,Sun Tide,reggae,chill,0.50,96,0.75,0.78,0.55
+17,Concrete Jungle,MC Axiom,hip-hop,intense,0.85,105,0.52,0.80,0.12
+18,Mountain Morning,Fern & Ivy,folk,relaxed,0.30,88,0.74,0.48,0.93

@@ -11,23 +11,79 @@ Your goal is to:
 - Evaluate what your system gets right and wrong
 - Reflect on how this mirrors real world AI recommenders
 
-Replace this paragraph with your own summary of what your version does.
+This project is a content-based music recommender that matches songs to a listener's taste profile. Given a user's preferred genre, mood, energy level, and acoustic preference, the system scores every song in a small CSV catalog and returns the top recommendations with explanations of why each song was chosen.
 
 ---
 
 ## How The System Works
 
-Explain your design in plain language.
+### How Real-World Recommendations Work
 
-Some prompts to answer:
+Real music platforms like Spotify combine multiple approaches: collaborative filtering ("users like you also liked..."), content-based filtering (comparing audio features of songs), and deep learning on raw audio signals. They process millions of tracks and billions of listening events in real time. Our version focuses on the content-based approach at a small scale — comparing song attributes directly to user preferences using a transparent, rule-based scoring system.
 
-- What features does each `Song` use in your system
-  - For example: genre, mood, energy, tempo
-- What information does your `UserProfile` store
-- How does your `Recommender` compute a score for each song
-- How do you choose which songs to recommend
+### Our Design
 
-You can include a simple diagram or bullet list if helpful.
+**Song features used:** Each song has categorical attributes (`genre`, `mood`) and numerical attributes (`energy`, `tempo_bpm`, `valence`, `danceability`, `acousticness`) on a 0.0–1.0 scale.
+
+**UserProfile stores:** A user's `favorite_genre`, `favorite_mood`, `target_energy` (0.0–1.0), and `likes_acoustic` (true/false).
+
+**Scoring Rule (per song):** The recommender scores each individual song against the user profile:
+- **Genre match:** +2.0 points if the song's genre matches the user's favorite (strongest signal)
+- **Mood match:** +1.5 points if the mood matches
+- **Energy closeness:** Up to +1.0 points, calculated as `1.0 - |target_energy - song_energy|` (rewards songs *closer* to the user's preferred energy, not simply higher or lower)
+- **Acoustic fit:** Up to +0.5 points based on the user's acoustic preference
+
+Maximum possible score: 5.0
+
+**Ranking Rule (across all songs):** The system loops through every song in the catalog, computes its score, sorts all songs from highest to lowest score, and returns the top K results along with an explanation of which rules contributed to each song's score.
+
+### Data Flow
+
+```mermaid
+flowchart TD
+    A[/"User Preferences\n(genre, mood, energy, likes_acoustic)"/] --> B["Load Songs from CSV"]
+    B --> C{"For each song\nin the catalog"}
+    C --> D["Score Song\n+2.0 genre match\n+1.5 mood match\n+1.0 energy closeness\n+0.5 acoustic fit"]
+    D --> E["Collect (song, score, reasons)"]
+    E --> C
+    C -- all scored --> F["Sort by score descending"]
+    F --> G[/"Return Top K\nwith explanations"/]
+```
+
+### Dataset
+
+The song catalog (`data/songs.csv`) contains 18 songs across 12 genres: pop, lofi, rock, ambient, jazz, synthwave, indie pop, r&b, electronic, classical, country, metal, reggae, hip-hop, and folk. Moods include happy, chill, intense, relaxed, moody, and focused. The original 10 starter songs were expanded with 8 additional songs to ensure genre and mood diversity.
+
+### User Profile
+
+The `UserProfile` is a dictionary with four keys:
+
+```python
+user_prefs = {
+    "genre": "pop",         # favorite genre (exact match against song genre)
+    "mood": "happy",        # favorite mood (exact match against song mood)
+    "energy": 0.8,          # target energy level, 0.0-1.0
+    "likes_acoustic": False  # preference for acoustic vs. electronic sound
+}
+```
+
+This profile can differentiate between very different listeners (e.g., "intense rock" vs. "chill lofi") because all four fields diverge between those profiles. The limitation is that it only captures one genre and one mood — real users have multi-dimensional taste.
+
+### Algorithm Recipe (Finalized Weights)
+
+| Rule | Points | Calculation |
+|---|---|---|
+| Genre match | +2.0 | Exact match = 2.0, else 0.0 |
+| Mood match | +1.5 | Exact match = 1.5, else 0.0 |
+| Energy closeness | up to +1.0 | `1.0 - abs(user_energy - song_energy)` |
+| Acoustic fit | up to +0.5 | `0.5 * acousticness` if likes_acoustic, else `0.5 * (1 - acousticness)` |
+| **Max total** | **5.0** | |
+
+### Expected Biases
+
+- **Genre bubble:** Genre is worth 40% of the max score (2.0/5.0), so the system will strongly favor same-genre songs even if another genre has a better mood/energy fit.
+- **Small catalog bias:** With only 18 songs and 12 genres, most genres have just 1 song — the system can't differentiate *within* a genre for rare genres.
+- **Single-mood limitation:** Users who enjoy different moods in different contexts (studying vs. gym) cannot be represented by a single profile.
 
 ---
 
