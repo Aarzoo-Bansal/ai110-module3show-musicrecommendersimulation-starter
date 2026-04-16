@@ -1,0 +1,21 @@
+# Reflection: Profile Comparisons
+
+## High-Energy Pop vs. Chill Lofi
+
+These two profiles are almost opposites — one wants pop/happy/0.8 energy, the other wants lofi/chill/0.4 energy. The results reflect this perfectly: the pop profile's top song (Sunrise City, energy 0.82) does not appear anywhere in the lofi profile's top 5, and vice versa. The chill lofi results are dominated by quiet, low-tempo songs like Midnight Coding and Library Rain, while the pop results feature upbeat, danceable tracks. This makes sense because genre and energy are both pulling in the same direction for each profile — there is no conflict between what they ask for, so the system can cleanly separate the two. The one overlap is that both lists reward songs with high danceability, which is a built-in bias rather than a user preference.
+
+## Deep Intense Rock vs. Zero Energy Listener
+
+The rock fan (energy 0.95) and the classical listener (energy 0.0) represent the most extreme energy gap in my test set. Storm Runner tops the rock list at 6.92 while Quiet Strings tops the classical list at 7.10. What stands out is that not a single song appears in both top-5 lists — the energy dimension alone is enough to completely separate them. The classical listener's results are all soft, acoustic tracks (Quiet Strings, Mountain Morning, Coffee Shop Stories), while the rock fan gets hard-hitting tracks across multiple genres (Storm Runner, Gym Hero, Bass Drop Central). This shows that energy works well as a differentiator when users are at opposite ends of the spectrum.
+
+## High-Energy Pop vs. Genre Not In Catalog (K-pop)
+
+The k-pop profile asked for a genre that does not exist in the catalog, so the genre match bonus (worth 3.0 points) was impossible to earn. Despite this, the k-pop user's results still look reasonable — Dust Road Anthem, Rooftop Lights, and Sunrise City all ranked highly because they match on mood (happy) and have similar energy. The pop profile and the k-pop profile share 3 of the same 5 songs, which makes sense since both want happy, medium-high-energy music. The key difference is score magnitude: Sunrise City scores 8.46 for the pop user (genre match included) but only 5.26 for the k-pop user (no genre match possible). This shows that missing a genre match does not break the system — it just lowers all scores uniformly, and mood + energy still produce a usable ranking.
+
+## Conflicting Prefs (R&B + Relaxed + High Energy) vs. Chill Lofi
+
+The conflicting profile is an interesting adversarial case — the user wants relaxed mood but very high energy (0.95), which is a contradiction in most real music. Compared to the chill lofi profile (which has internally consistent preferences), the conflicting profile produces a scattered, less coherent top-5: Late Night Bars (#1 via genre match, but energy=0.55 is way off), Gym Hero (#2 via energy match, but wrong genre and mood), and Coffee Shop Stories (#3 via mood match, but low energy). The chill lofi profile, by contrast, produces a tight, coherent list where the top songs match on genre, mood, and energy simultaneously. This comparison shows that the system does not detect or warn about conflicting preferences — it just averages them out, which can produce recommendations that satisfy none of the user's actual desires. A real system should flag when preferences contradict each other.
+
+## Deep Intense Rock: Original Weights vs. Experiment (Energy Doubled)
+
+In the original weighting, Storm Runner (rock, energy 0.91) ranked #1 for the rock fan with a score of 6.92, and Gym Hero (pop, energy 0.93) ranked #2 at 5.46. After doubling energy weight and halving genre weight, Gym Hero jumped to #1 (7.42) and Storm Runner dropped to #2 (7.34). The 0.02 energy difference between Gym Hero (0.93) and Storm Runner (0.91) was amplified by the 4x energy multiplier, while the genre advantage of Storm Runner was cut in half. This demonstrates how sensitive recommendations are to weight tuning — a small change in the scoring formula flipped the top result from the "correct" genre to a completely different one. For a rock fan, seeing a pop song as their #1 recommendation would feel wrong, even though the math checks out. This is why weight design is a human judgment call, not a purely mathematical optimization.

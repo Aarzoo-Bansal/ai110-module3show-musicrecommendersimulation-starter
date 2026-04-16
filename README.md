@@ -124,25 +124,129 @@ You can add more tests in `tests/test_recommender.py`.
 
 ## Experiments You Tried
 
-Use this section to document the experiments you ran. For example:
+### Weight Shift Experiment: Genre Halved, Energy Doubled
 
-- What happened when you changed the weight on genre from 2.0 to 0.5
-- What happened when you added tempo or valence to the score
-- How did your system behave for different types of users
+Changed genre weight from 3.0 to 1.5 and energy weight from 2.0 to 4.0. Key result: for the "Deep Intense Rock" profile, Gym Hero (pop, energy 0.93) overtook Storm Runner (rock, energy 0.91) as the #1 recommendation. A 0.02 energy difference was amplified by the 4x multiplier and outweighed the halved genre bonus. This showed the system is highly sensitive to weight tuning and that genre weight is important for keeping recommendations genre-relevant. The original weights were restored.
+
+### Multi-Profile Testing
+
+Tested 6 profiles including 3 adversarial edge cases:
+
+- **Conflicting preferences** (R&B + relaxed + energy 0.95): The system averaged out the contradiction, producing scattered results that did not fully satisfy either the mood or energy preference.
+- **Genre not in catalog** (k-pop): Graceful degradation — mood and energy still produced a reasonable ranking despite zero genre matches being possible.
+- **Zero energy** (classical + relaxed + energy 0.0): Correctly surfaced the quietest, most acoustic songs in the catalog.
+
+### Terminal Output — Original Weights
+
+```
+Loaded songs: 18
+
+=======================================================
+  [High-Energy Pop]
+  Prefs: genre=pop | mood=happy | energy=0.8
+=======================================================
+
+  #1  Sunrise City by Neon Echo
+      Genre: pop | Mood: happy | Energy: 0.82
+      Score: 8.46
+      Reasons: genre match (+3.0); mood match (+2.0); energy similarity (+1.96); high danceability (+1.0); positive valence (+0.5)
+
+  #2  Gym Hero by Max Pulse
+      Genre: pop | Mood: intense | Energy: 0.93
+      Score: 6.24
+      Reasons: genre match (+3.0); energy similarity (+1.74); high danceability (+1.0); positive valence (+0.5)
+
+  #3  Rooftop Lights by Indigo Parade
+      Genre: indie pop | Mood: happy | Energy: 0.76
+      Score: 5.42
+
+  #4  Dust Road Anthem by The Porchmen
+      Genre: country | Mood: happy | Energy: 0.65
+      Score: 5.20
+
+  #5  Night Drive Loop by Neon Echo
+      Genre: synthwave | Mood: moody | Energy: 0.75
+      Score: 2.90
+
+-------------------------------------------------------
+
+=======================================================
+  [Chill Lofi]
+  Prefs: genre=lofi | mood=chill | energy=0.4
+=======================================================
+
+  #1  Midnight Coding by LoRoom          Score: 6.96
+  #2  Library Rain by Paper Lanterns      Score: 6.90
+  #3  Island Breeze by Sun Tide           Score: 5.30
+  #4  Focus Flow by LoRoom               Score: 5.00
+  #5  Spacewalk Thoughts by Orbit Bloom   Score: 3.76
+
+-------------------------------------------------------
+
+=======================================================
+  [Deep Intense Rock]
+  Prefs: genre=rock | mood=intense | energy=0.95
+=======================================================
+
+  #1  Storm Runner by Voltline            Score: 6.92
+  #2  Gym Hero by Max Pulse               Score: 5.46
+  #3  Bass Drop Central by DJ Frostbyte   Score: 5.00
+  #4  Concrete Jungle by MC Axiom         Score: 4.80
+  #5  Rage Circuit by Iron Veil           Score: 3.94
+
+-------------------------------------------------------
+
+=======================================================
+  [Conflicting: High Energy + Sad Mood]
+  Prefs: genre=r&b | mood=relaxed | energy=0.95
+=======================================================
+
+  #1  Late Night Bars by Dre Velvet       Score: 5.20
+  #2  Gym Hero by Max Pulse               Score: 3.46
+  #3  Coffee Shop Stories by Slow Stereo  Score: 3.34
+  #4  Sunrise City by Neon Echo           Score: 3.24
+  #5  Mountain Morning by Fern & Ivy      Score: 3.20
+
+-------------------------------------------------------
+
+=======================================================
+  [Genre Not In Catalog]
+  Prefs: genre=k-pop | mood=happy | energy=0.7
+=======================================================
+
+  #1  Dust Road Anthem by The Porchmen    Score: 5.40
+  #2  Rooftop Lights by Indigo Parade     Score: 5.38
+  #3  Sunrise City by Neon Echo           Score: 5.26
+  #4  Island Breeze by Sun Tide           Score: 3.10
+  #5  Gym Hero by Max Pulse               Score: 3.04
+
+-------------------------------------------------------
+
+=======================================================
+  [Zero Energy Listener]
+  Prefs: genre=classical | mood=relaxed | energy=0.0
+=======================================================
+
+  #1  Quiet Strings by Clara Muse         Score: 7.10
+  #2  Mountain Morning by Fern & Ivy      Score: 3.90
+  #3  Coffee Shop Stories by Slow Stereo  Score: 3.76
+  #4  Island Breeze by Sun Tide           Score: 2.50
+  #5  Dust Road Anthem by The Porchmen    Score: 2.20
+
+-------------------------------------------------------
+```
 
 ---
 
 ## Limitations and Risks
 
-Summarize some limitations of your recommender.
+- **Tiny catalog (18 songs):** Most genres have only 1 song, so the system cannot differentiate within a genre. A rock fan always gets Storm Runner regardless of subgenre preference.
+- **Genre dominance:** Genre match is worth 3.0 out of a max 8.5 points. A same-genre song with wrong mood and energy can outscore a perfect mood+energy match from another genre.
+- **Built-in danceability/valence bias:** Songs with high danceability (>=0.7) and high valence (>=0.7) get bonus points regardless of user preference. This quietly favors upbeat, danceable music for all users, including those who prefer slow or melancholic tracks.
+- **No lyrics, language, or cultural context:** The system cannot distinguish between English and non-English music, does not consider lyrical themes, and ignores cultural context entirely.
+- **Single-profile limitation:** Users can only express one genre and one mood. Real listeners have contextual taste (gym vs. study vs. commute).
 
-Examples:
-
-- It only works on a tiny catalog
-- It does not understand lyrics or language
-- It might over favor one genre or mood
-
-You will go deeper on this in your model card.
+See [model_card.md](model_card.md) for a deeper analysis.
 
 ---
 
@@ -152,116 +256,9 @@ Read and complete `model_card.md`:
 
 [**Model Card**](model_card.md)
 
-Write 1 to 2 paragraphs here about what you learned:
+See also: [**reflection.md**](reflection.md) for detailed profile-pair comparisons.
 
-- about how recommenders turn data into predictions
-- about where bias or unfairness could show up in systems like this
+Building this recommender taught me that the "algorithm" is really just a set of human decisions encoded as weights. When I chose genre=3.0 and mood=2.0, I was implicitly saying "genre matters 50% more than mood" — and that single decision determined whether a pop fan sees rock songs or not. The experiment of doubling energy weight showed how fragile these choices are: a small weight change flipped the #1 result from the "right" genre to a completely different one. Real platforms like Spotify face this same tradeoff at massive scale, but with the added complexity of learning weights from user behavior rather than setting them by hand.
 
-
----
-
-## 7. `model_card_template.md`
-
-Combines reflection and model card framing from the Module 3 guidance. :contentReference[oaicite:2]{index=2}  
-
-```markdown
-# 🎧 Model Card - Music Recommender Simulation
-
-## 1. Model Name
-
-Give your recommender a name, for example:
-
-> VibeFinder 1.0
-
----
-
-## 2. Intended Use
-
-- What is this system trying to do
-- Who is it for
-
-Example:
-
-> This model suggests 3 to 5 songs from a small catalog based on a user's preferred genre, mood, and energy level. It is for classroom exploration only, not for real users.
-
----
-
-## 3. How It Works (Short Explanation)
-
-Describe your scoring logic in plain language.
-
-- What features of each song does it consider
-- What information about the user does it use
-- How does it turn those into a number
-
-Try to avoid code in this section, treat it like an explanation to a non programmer.
-
----
-
-## 4. Data
-
-Describe your dataset.
-
-- How many songs are in `data/songs.csv`
-- Did you add or remove any songs
-- What kinds of genres or moods are represented
-- Whose taste does this data mostly reflect
-
----
-
-## 5. Strengths
-
-Where does your recommender work well
-
-You can think about:
-- Situations where the top results "felt right"
-- Particular user profiles it served well
-- Simplicity or transparency benefits
-
----
-
-## 6. Limitations and Bias
-
-Where does your recommender struggle
-
-Some prompts:
-- Does it ignore some genres or moods
-- Does it treat all users as if they have the same taste shape
-- Is it biased toward high energy or one genre by default
-- How could this be unfair if used in a real product
-
----
-
-## 7. Evaluation
-
-How did you check your system
-
-Examples:
-- You tried multiple user profiles and wrote down whether the results matched your expectations
-- You compared your simulation to what a real app like Spotify or YouTube tends to recommend
-- You wrote tests for your scoring logic
-
-You do not need a numeric metric, but if you used one, explain what it measures.
-
----
-
-## 8. Future Work
-
-If you had more time, how would you improve this recommender
-
-Examples:
-
-- Add support for multiple users and "group vibe" recommendations
-- Balance diversity of songs instead of always picking the closest match
-- Use more features, like tempo ranges or lyric themes
-
----
-
-## 9. Personal Reflection
-
-A few sentences about what you learned:
-
-- What surprised you about how your system behaved
-- How did building this change how you think about real music recommenders
-- Where do you think human judgment still matters, even if the model seems "smart"
+The most eye-opening finding was how "Gym Hero" appeared in 4 out of 6 top-5 lists. Its high danceability and valence scores gave it a persistent advantage across almost every profile, even when the user did not ask for danceable or upbeat music. This is exactly how filter bubbles form in real systems — certain items with "universally appealing" features get recommended to everyone, crowding out niche content that might be a better fit for specific users. Fairness in recommendation is not just about the algorithm being correct; it is about whose taste the default bonuses are designed around
 
